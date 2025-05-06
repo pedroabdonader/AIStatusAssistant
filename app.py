@@ -31,7 +31,7 @@ def get_response(user_input):
     messages = [
         {
             "role": "system",
-            "content": "You are a status summarization assistant that will only respond with a string for a python dictionary and never with anything else. The string dictionary will then become a pandas dataframe with Four columns: Workstream name, Status (either: Done, On Time, At Risk, Late, Cancelled), Current Week achievements (One very short sentence summarizing the weekly achievements. If available, please include dates of when things were completed), and next steps(One very short sentence summarizing the next steps. If available, please include dates of when things are expected to get done). Don't say anything else except the string dictionary. DO NOT GIVE ME IN A PYTHON CODE FORMAT, GIVE ME A STRING"
+            "content": "You are a status summarization assistant that will only respond with a string for a python dictionary and never with anything else. The string dictionary will then become a pandas dataframe with Four columns: Workstream name, Status (either: Done, On Time, At Risk, Late, Cancelled), Current Week achievements (One short sentence summarizing the weekly achievements. If available, please include dates of when things were completed), and next steps(One short sentence summarizing the next steps. If available, please include dates of when things are expected to get done). Don't say anything else except the string dictionary. DO NOT GIVE ME IN A PYTHON CODE FORMAT, GIVE ME A STRING"
         },
         {"role": "user", "content": f"Here are my notes: {user_input}"}
     ]
@@ -127,7 +127,7 @@ def index():
 @app.route('/download', methods=['GET'])
 def download():
     # Send the PowerPoint file for download
-    return send_file(ppt_file_stream, as_attachment=True, download_name=f"SOP_Assistant_Status_Report_{datetime.now().strftime('%Y-%m-%d')}.pptx")
+    return send_file(ppt_file_stream, as_attachment=True, download_name=f"Status_Report_{datetime.now().strftime('%Y-%m-%d')}.pptx")
 
 
 if __name__ == '__main__':
