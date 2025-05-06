@@ -141,4 +141,12 @@ form input:hover {
 
 #downloadLink {
     text-align: center;
+    width: fit-content;
+    background-color: #4caf50;
+    padding: 1em;
+    border-radius: 30px;
+    text-decoration: none;
+    color: white;
+    margin-left: 50%;
+    transform: translateX(-50%);
 }
