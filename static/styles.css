@@ -1,0 +1,144 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+.container {
+    width: 80%;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+form{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+form textarea{
+    width: 100%;
+    height: 60vh;
+    scrollbar-width: 0;
+    font-family: monospace;
+    border-radius: 30px;
+    border: 1px solid #ccc;
+    padding: 30px;
+}
+
+form input {
+    width: 20%;
+    padding: 10px;
+    border-radius: 30px;
+    border: 1px solid #ccc;
+    background-color: cadetblue;
+    color: white;
+    transition: background-color 0.3s ease, width 0.3s ease;
+}
+
+form input:hover {
+    background-color: rgb(55, 130, 132);
+    cursor: pointer;
+    width: 19%;
+}
+
+
+/* Loading Spinner Styles */
+#loadingSpinner {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    background-color: rgba(255, 255, 255, 0.8); /* White background with transparency */
+    z-index: 9999; /* Sit on top */
+    justify-content: center; /* Center the spinner */
+    align-items: center; /* Center the spinner */
+}
+
+.spinner {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 60px; /* Spinner size */
+    height: 60px; /* Spinner size */
+    animation: spin 1s linear infinite; /* Spin animation */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+#dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 18px;
+    text-align: left;
+}
+
+#dataTable th, #dataTable td {
+    padding: 12px;
+    border: 1px solid #333; /* Dark gray border */
+}
+
+#dataTable th {
+    background-color: #4CAF50;
+    color: white;
+}
+
+#dataTable tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#dataTable tr:hover {
+    background-color: #ddd;
+}
+
+
+
+#dataModal {
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+}
+
+#modalContent {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+}
+
+#closeModal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+#closeModal:hover,
+#closeModal:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#downloadLink {
+    text-align: center;
+}

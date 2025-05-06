@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workstream Notes to PPT</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Workstream Notes Input</h1>
+        <p>Please enter your workstream notes in the text area below. Make sure to point out what are the workstreams in the begginning of your notes. Once you have entered your notes, click the "Run" button to generate a PowerPoint presentation summarizing your input.</p>
+        <form id="notesForm">
+            <textarea name="notes" rows="10" cols="50" placeholder="Enter your workstream notes here..."></textarea><br>
+            <input type="submit" value="Run">
+        </form>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner">
+        <div class="spinner"></div>
+    </div>
+
+        <!-- Modal for displaying DataFrame -->
+    <div id="dataModal" style="display:none;">
+        <div id="modalContent">
+            <span id="closeModal">&times;</span>
+            <h2>DataFrame</h2>
+            <table id="dataTable"></table>
+            <!-- Download link will be appended here -->
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
