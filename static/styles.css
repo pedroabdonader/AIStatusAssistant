@@ -36,13 +36,13 @@ form input {
     padding: 10px;
     border-radius: 30px;
     border: 1px solid #ccc;
-    background-color: cadetblue;
-    color: white;
+    background-color: #FFE600;
+    color: rgb(0, 0, 0);
     transition: background-color 0.3s ease, width 0.3s ease;
 }
 
 form input:hover {
-    background-color: rgb(55, 130, 132);
+    background-color: #fff490;
     cursor: pointer;
     width: 19%;
 }
@@ -64,7 +64,7 @@ form input:hover {
 
 .spinner {
     border: 8px solid #f3f3f3; /* Light grey */
-    border-top: 8px solid #3498db; /* Blue */
+    border-top: 8px solid #FFE600; /* Blue */
     border-radius: 50%;
     width: 60px; /* Spinner size */
     height: 60px; /* Spinner size */
@@ -91,8 +91,8 @@ form input:hover {
 }
 
 #dataTable th {
-    background-color: #4CAF50;
-    color: white;
+    background-color: #FFE600;
+    color: rgb(0, 0, 0);
 }
 
 #dataTable tr:nth-child(even) {
@@ -142,11 +142,17 @@ form input:hover {
 #downloadLink {
     text-align: center;
     width: fit-content;
-    background-color: #4caf50;
+    background-color: #FFE600;
     padding: 1em;
     border-radius: 30px;
     text-decoration: none;
-    color: white;
+    color: black;
     margin-left: 50%;
     transform: translateX(-50%);
+    transition: ease 0.3s;
+}
+
+#downloadLink:hover {
+    background-color: #fff490;
+    cursor: pointer;
 }
