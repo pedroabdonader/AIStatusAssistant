@@ -7,7 +7,7 @@ import pandas as pd
 import ast
 from datetime import datetime
 from pptx import Presentation
-from pptx.util import Pt
+from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from io import BytesIO
  
