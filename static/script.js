@@ -18,37 +18,39 @@ document.getElementById('notesForm').onsubmit = function(event) {
         // Create a table to display the DataFrame
         const table = document.getElementById('dataTable');
         table.innerHTML = ''; // Clear previous data
-
-        // Create table headers
-        const headers = ['Workstream name', 'Status', 'Current Week achievements', 'Next steps'];
+    
+        // Use the received column names for headers
+        const columnOrder = data.columns; // Get the column names from the response
+    
+        // Create table headers based on the defined order
         const headerRow = document.createElement('tr');
-        headers.forEach(header => {
+        columnOrder.forEach(header => {
             const th = document.createElement('th');
-            th.textContent = header;
+            th.textContent = header; // Use the header name
             headerRow.appendChild(th);
         });
         table.appendChild(headerRow); // Append header row to the table
-
-        // Populate the table with DataFrame data
-        data.forEach(row => {
+    
+        // Populate the table with DataFrame data based on the defined order
+        data.data.forEach(row => {
             const tr = document.createElement('tr');
-            for (const key of headers) {
+            columnOrder.forEach(header => {
                 const td = document.createElement('td');
-                td.textContent = row[key]; // Use the key to access the correct data
+                td.textContent = row[header] || ''; // Use the key to access the correct data
                 tr.appendChild(td);
-            }
+            });
             table.appendChild(tr);
         });
-
+    
         // Show the modal
         document.getElementById('dataModal').style.display = 'block';
-
+    
         // Clear previous download link if it exists
         const existingLink = document.getElementById('downloadLink');
         if (existingLink) {
             existingLink.remove(); // Remove the existing download link
         }
-
+    
         // Create a new download link for the PowerPoint file
         const downloadLink = document.createElement('a');
         downloadLink.id = 'downloadLink'; // Set an ID for the download link
@@ -56,12 +58,8 @@ document.getElementById('notesForm').onsubmit = function(event) {
         downloadLink.textContent = 'Download PowerPoint Report';
         downloadLink.style.display = 'block'; // Make it a block element
         document.getElementById('modalContent').appendChild(downloadLink);
-
+    
         hideSpinner(); // Hide the spinner after processing
-    })
-    .catch(error => {
-        console.error('There was a problem with the fetch operation:', error);
-        hideSpinner(); // Hide the spinner in case of error
     });
 };
 
