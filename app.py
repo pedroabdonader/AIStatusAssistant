@@ -10,7 +10,7 @@ from pptx import Presentation
 from pptx.util import Pt
 from pptx.dml.color import RGBColor
 from io import BytesIO
-
+ 
 app = Flask(__name__)
 
 # Azure OpenAI client configuration
