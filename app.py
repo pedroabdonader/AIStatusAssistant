@@ -10,6 +10,7 @@ from pptx import Presentation
 from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from io import BytesIO
+import pytz
  
 app = Flask(__name__)
 
@@ -31,41 +32,132 @@ def get_response(user_input):
     messages = [
         {
             "role": "system",
-            "content": "You are a status summarization assistant that will only respond with a string for a python dictionary and never with anything else. The string dictionary will then become a pandas dataframe with Four columns: Workstream (Workstream name), Status (either: Done, On Time, At Risk, Late, Cancelled), Achievements (One short sentence summarizing the weekly achievements. If available, please include dates of when things were completed), Next Steps(One short sentence summarizing the next steps. If available, please include dates of when things are expected to get done), and Expected End Date (When The initiative should be complete). Don't say anything else except the string dictionary. DO NOT GIVE ME IN A PYTHON CODE FORMAT, GIVE ME A STRING"
+            "content": "You are a status summarization assistant. I want the following information per Workstream: Workstream (Workstream name), Status (either: Done, On Time, At Risk, Late, Cancelled), Achievements (One short sentence summarizing the weekly achievements. If available, please include dates of when things were completed), Next Steps(One short sentence summarizing the next steps. If available, please include dates of when things are expected to get done), and Expected End Date (If available, when each workstream should be complete)."
+            "Additionally, I want the following with information from all workstreams: Title (Should include most key information across workstreams and include the date), Description (A summary description of all status update across all workstreams), Key Decisions (Key decisions made during the status update period), and Issues/Risks (Issues and risks identified in the update)."
         },
-        {"role": "user", "content": f"Here are my notes: {user_input}"}
+        {"role": "user", "content": f"Here are my notes as of today {datetime.now(tz=pytz.timezone('America/New_York')).strftime('%Y-%m-%d')}: {user_input}"}
     ]
+
+    response_format = {
+        "type" : "json_schema",
+        "json_schema" : {
+    "name": "weekly_status_update",
+    "schema": {
+        "type": "object",
+        "properties": {
+        "title": {
+            "type": "string",
+            "description": "The title of the status update."
+        },
+        "description": {
+            "type": "string",
+            "description": "A summary description of the status update across all workstreams."
+        },
+        "updates": {
+            "type": "array",
+            "description": "List of workstreams and their statuses.",
+            "items": {
+            "type": "object",
+            "properties": {
+                "Workstream": {
+                "type": "string",
+                "description": "Name of the workstream."
+                },
+                "Status": {
+                "type": "string",
+                "description": "Current status of the workstream."
+                },
+                "Achievements": {
+                "type": "array",
+                "description": "Achievements made in the workstream.",
+                "items": {"type": "string"}
+                },
+                "Next Steps": {
+                "type": "array",
+                "description": "Next steps planned for the workstream.",
+                "items": {"type": "string"}
+                },
+                "Planned End Date": {
+                "type": "string",
+                "description": "When the workstream is planned to end."
+                }
+            },
+            "required": [
+                "Workstream",
+                "Status",
+                "Achievements",
+                "Next Steps",
+                "Planned End Date"
+            ],
+            "additionalProperties": False
+            }
+        },
+        "key_decisions": {
+            "type": "array",
+            "description": "Key decisions made during the status update period.",
+            "items": {
+            "type": "string"
+            }
+        },
+        "issues_risks": {
+            "type": "array",
+            "description": "Issues and risks identified in the update.",
+            "items": {
+            "type": "string"
+            }
+        }
+        },
+        "required": [
+        "title",
+        "description",
+        "updates",
+        "key_decisions",
+        "issues_risks"
+        ],
+        "additionalProperties": False
+    },
+    "strict": True
+    }
+    }
+
+
 
     response = client.chat.completions.create(
         stream=False,
         messages=messages,
+        response_format=response_format,
         max_tokens=4096,
         temperature=0,
         top_p=1.0,
         model=deployment,
     )
 
-    response_content = response.choices[0].message.content
-    print(response_content)  # Debugging line
+    response_dict = ast.literal_eval(response.choices[0].message.content)
 
-    first_bracket = response_content.find('{')
-    last_bracket = response_content.rfind('}')
-
-    if first_bracket != -1 and last_bracket != -1:
-        response_content = response_content[first_bracket:last_bracket + 1]
-
-    response_dict = ast.literal_eval(response_content)
+    print(response_dict)  # Debugging line
+    print(type(response_dict))  # Debugging line
     return response_dict
 
 def createDf(data):
     df = pd.DataFrame(data)
     return df
 
-def populate_powerpoint_template(df):
+def populate_powerpoint_template(df, title, description, key_decisions, issues_risks):
     presentation = Presentation("template.pptx")  # Ensure you have a template.pptx file
 
-    # Get the first slide
+    #Get the cover slide
     slide = presentation.slides[0]
+
+    for shape in slide.shapes:
+        if shape.name == "Cover Title":
+            shape.text = title
+            for paragraph in shape.text_frame.paragraphs:
+                paragraph.font.size = Pt(32)
+                paragraph.font.color.rgb = RGBColor(255, 255, 255)
+
+
+    # Get the Status slide
+    slide = presentation.slides[1]
 
     # Define the position and size of the table
     left = Inches(0.53)
@@ -83,7 +175,7 @@ def populate_powerpoint_template(df):
 
     # Set header row height
     table.rows[0].height = Inches(0.3)  # Set header row height to 0.3 inches
-    
+
     # Set header row with background color and font size
     for col_idx, col_name in enumerate(df.columns):
         cell = table.cell(0, col_idx)
@@ -97,6 +189,10 @@ def populate_powerpoint_template(df):
         for col_idx in range(cols):
             cell = table.cell(row_idx + 1, col_idx)
             cell.text = str(df.iat[row_idx, col_idx])
+
+            if isinstance(df.iat[row_idx, col_idx],list):   # Check if the cell contains a list, if it does, join the list into a string in different lines (This is for the Achievements and Next Steps columns)
+                cell.text = str("\n".join(df.iat[row_idx, col_idx]))
+
             cell.fill.solid()
             cell.fill.fore_color.rgb = RGBColor(250, 250, 250)  #White background
             # Conditional formatting for the second column (status)
@@ -120,8 +216,37 @@ def populate_powerpoint_template(df):
                 else:
                     cell.fill.solid()
                     cell.fill.fore_color.rgb = RGBColor(250, 250, 250)  # Default to white background
-            cell.text_frame.paragraphs[0].font.size = Pt(10)
-            cell.text_frame.paragraphs[0].font.color.rgb = RGBColor(0, 0, 0)  # Black font
+            # Set font size and color for all paragraphs in the cell
+            for paragraph in cell.text_frame.paragraphs:
+                paragraph.font.size = Pt(11)
+                paragraph.font.color.rgb = RGBColor(0, 0, 0)  # Black font
+
+
+    # Populate other shapes with the title, description, key decisions, and issues/risks
+    # Format Key Decisions Box with bullets
+    for shape in slide.shapes:
+        if shape.name == "Description":
+            shape.text = description
+            for paragraph in shape.text_frame.paragraphs:
+                paragraph.font.size = Pt(12)
+                paragraph.font.color.rgb = RGBColor(0, 0, 0)    
+        elif shape.name == "Title":
+            shape.text = title
+            for paragraph in shape.text_frame.paragraphs:
+                paragraph.font.size = Pt(28)
+                paragraph.font.color.rgb = RGBColor(0, 0, 0)
+        elif shape.name == "Key Decisions Box":
+            shape.text = "\n".join(key_decisions)
+            for paragraph in shape.text_frame.paragraphs:
+                paragraph.font.size = Pt(12)
+                paragraph.font.color.rgb = RGBColor(0, 0, 0)
+        elif shape.name == "Issues/Risks Box":
+            shape.text = "\n".join(issues_risks)
+            for paragraph in shape.text_frame.paragraphs:
+                paragraph.font.size = Pt(12)
+                paragraph.font.color.rgb = RGBColor(0, 0, 0)
+
+
 
     # Save the presentation to a BytesIO object
     ppt_stream = BytesIO()
@@ -154,7 +279,7 @@ def index():
     if request.method == 'POST':
         notes = request.form['notes']
         result = get_response(notes)
-        df = createDf(result)
+        df = createDf(result['updates'])
         
         # Include column names in the response
         response_data = {
@@ -163,7 +288,7 @@ def index():
         }
         
         # Save the PowerPoint file to a BytesIO object
-        ppt_stream = populate_powerpoint_template(df)
+        ppt_stream = populate_powerpoint_template(df, result['title'], result['description'], result['key_decisions'], result['issues_risks'])
 
         # Store the stream in a global variable or use a session to access it later
         global ppt_file_stream
@@ -177,7 +302,7 @@ def index():
 @app.route('/download', methods=['GET'])
 def download():
     # Send the PowerPoint file for download
-    return send_file(ppt_file_stream, as_attachment=True, download_name=f"Status_Report_{datetime.now().strftime('%Y-%m-%d')}.pptx")
+    return send_file(ppt_file_stream, as_attachment=True, download_name=f"Status_Report_{datetime.now(tz=pytz.timezone('America/New_York')).strftime('%Y-%m-%d')}.pptx")
 
 
 if __name__ == '__main__':
