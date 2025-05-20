@@ -11,7 +11,7 @@ from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from io import BytesIO
 import pytz
-
+ 
 app = Flask(__name__)
 
 # Azure OpenAI client configuration
