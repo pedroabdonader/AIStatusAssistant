@@ -12,9 +12,19 @@ document.getElementById('notesForm').onsubmit = function(event) {
         if (response.ok) {
             return response.json(); // Get the response as JSON
         }
+        else if (response.status === 400) {
+            alert('Insufficient Notes for summary generation, please provide more notes and try again.'); // Handle 400 error
+            hideSpinner(); // Hide the spinner
+        }
+        // If the response is not ok, throw an error
+        // This will be caught in the catch block below
         throw new Error('Network response was not ok.');
     })
     .then(data => {
+
+        console.log(typeof data); // Log the response data for debugging
+        console.log(data); // Log the response data for debugging
+
         // Create a table to display the DataFrame
         const table = document.getElementById('dataTable');
         table.innerHTML = ''; // Clear previous data
