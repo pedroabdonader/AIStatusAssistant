@@ -11,7 +11,7 @@ from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from io import BytesIO
 import pytz
- 
+
 app = Flask(__name__)
 
 # Azure OpenAI client configuration
@@ -196,12 +196,20 @@ def get_response(user_input):
                 "description": "A summary description of the status updates across all workstreams."
             },
             "key_decisions": {
-                "type": "string",
-                "description": "Key decisions made during the status update period."
+                "type": "array",
+                "description": "Key decisions made during the status update period.",
+                "items": {
+                    "type": "string",
+                    "description": "A description of the key decision."
+                }
             },
             "issues_risks": {
-                "type": "string",
-                "description": "Issues and risks identified in the update."
+                "type": "array",
+                "description": "Issues and risks identified in the update.",
+                "items": {
+                    "type": "string",
+                    "description": "A description of the issue or risk."
+                }
             },
             "enough_information": {
                 "type": "string",
@@ -389,26 +397,34 @@ def index():
         print(result)  # Debugging line
         if result['enough_information'] == "False":
             return jsonify({"columns": ["Error"], "data":[{"Error":"Insufficient Notes for summary generation, please provide more notes and try again."}]}),400
-        df = createDf(result['updates'])
-        
-        # Include column names in the response
-        response_data = {
-            'columns': df.columns.tolist(),  # Get the column names
-            'data': df.to_dict(orient='records')  # Get the data
-        }
-        
-        # Save the PowerPoint file to a BytesIO object
-        ppt_stream = populate_powerpoint_template(df, result['title'], result['description'], result['key_decisions'], result['issues_risks'])
+        else:
+            df = createDf(result['updates'])
+            
+            # Include column names in the response
+            response_data = {
+                'columns': df.columns.tolist(),  # Get the column names
+                'data': df.to_dict(orient='records')  # Get the data
+            }
+            print(result['title'])
+            print(result['description'])
+            print(result['key_decisions'])
+            print(result['issues_risks'])
 
-        # Store the stream in a global variable or use a session to access it later
-        global ppt_file_stream
-        ppt_file_stream = ppt_stream
+            print(type(result['key_decisions']))
+            print(type(result['issues_risks']))
 
-        print('-----------------------------------------------------')
-        print(response_data)
+            # Save the PowerPoint file to a BytesIO object
+            ppt_stream = populate_powerpoint_template(df, result['title'], result['description'], result['key_decisions'], result['issues_risks'])
 
-        # Return the DataFrame as JSON
-        return jsonify(response_data)
+            # Store the stream in a global variable or use a session to access it later
+            global ppt_file_stream
+            ppt_file_stream = ppt_stream
+
+            print('-----------------------------------------------------')
+            print(response_data)
+
+            # Return the DataFrame as JSON
+            return jsonify(response_data)
 
     return render_template('index.html')
 
