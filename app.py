@@ -11,128 +11,235 @@ from pptx.util import Pt, Inches
 from pptx.dml.color import RGBColor
 from io import BytesIO
 import pytz
- 
+
 app = Flask(__name__)
 
 # Azure OpenAI client configuration
-endpoint = os.environ.get('AZURE_ENDPOINT')
-model_name = "gpt-4o"
-deployment = "gpt-4o"
+endpoint = os.environ.get("AZURE_ENDPOINT")
+model_name = "gpt-4o-mini"
+deployment = "gpt-4o-mini"
 
-api_key = os.environ.get('AZURE_KEY')
-api_version = "2024-12-01-preview"
+subscription_key = os.environ.get("AZURE_KEY")
+api_version = "2025-03-01-preview"
 
 client = AzureOpenAI(
     api_version=api_version,
     azure_endpoint=endpoint,
-    api_key=api_key,
+    api_key=subscription_key,
 )
 
 def get_response(user_input):
     messages = [
         {
             "role": "system",
-            "content": "You are a status summarization assistant. I want the following information per Workstream: Workstream (Workstream name), Status (either: Done, On Time, At Risk, Late, Cancelled), Achievements (One short sentence summarizing the weekly achievements. If available, please include dates of when things were completed), Next Steps(One short sentence summarizing the next steps. If available, please include dates of when things are expected to get done), and Expected End Date (If available, when each workstream should be complete)."
-            "Additionally, I want the following with information from all workstreams: Title (Should include most key information across workstreams and include the date), Description (A summary description of all status update across all workstreams), Key Decisions (Key decisions made during the status update period), and Issues/Risks (Issues and risks identified in the update)."
+            "content": (
+                "You are a status summarization assistant designed to process project updates. "
+                "Your task is to summarize the status of various workstreams based on the provided notes. "
+                "You should only respond based on the provided notes. If the notes are insufficient or irrelevant, indicate that there is not enough information to summarize the status update."
+                "For each workstream, you should extract and report the following information: "
+                "1. Workstream (name of the workstream) "
+                "2. Status (choose from: Done, On Time, At Risk, Late, Cancelled) "
+                "3. Achievements (a brief summary of weekly achievements, including completion dates in MM/DD format if available) "
+                "4. Next Steps (a brief summary of upcoming tasks, including expected completion dates in MM/DD format if available) "
+                "5. Expected End Date (if available, the anticipated completion date in MM/DD format). "
+                "Additionally, provide a summary for all workstreams that includes: "
+                "1. Title (a concise title with key information and the date in MM/DD format) "
+                "2. Description (a summary of all status updates) "
+                "3. Key Decisions (important decisions made during the update period) "
+                "4. Issues/Risks (any identified issues or risks)."
+            )
+        },
+        {
+            "role": "user",
+            "content": """Here are my notes as of today 2025-05-07: Technical Scrum Call 5/7/2025 
+            BPM: 
+            A. Blockers:  
+            B. What did you do this week:  Looked into SBX data, found some areas missing data (will follow-up on stand up call 5/9) – emailed BPO have not heard back yet so there is data for testing. Revamp BRD and process flows to ensure tech requirements are captured. SNOW team requirements to start onboarding process awaiting to hear latest update from Developer. 
+            C. What are the goals for the week:  Clean-up test data and review requirements on business stand-up call. Please include IT Lead on meeting (5/14) with BPO to include AI conversation as well. 
+            
+            DE: 
+            A. Blockers: n/a 
+            B. What did you do this week:  QDR documents completed – UAT performed last week. DE to push the QDR documents to ODL. Impact to timeline is related to the table (managing of the repository) continuing to work on timeline impact is TBD.  Team to follow-up with DE lead on 5/7 will connect with PM. IOQ draft to be ready on 5/12. 
+            C. What are the goals for the week: DE team to finish managing tasks on Datalake and perform UAT on all tables that were ingestion then can proceed to validation. team to follow-up on validated data timeline. 
+            
+            AI: 
+            A. Blockers: AI developer not assigned to SOP. 
+            B. What did you do this week: IT leadership are working with AI leadership to provide POC for AI developer. Expecting AI developer by EOD, 5/7. 
+            C. What are the goals for the week: Assign AI developer to SOP. Need to uderstand AI dev timeline working along closely with SA. 
+            
+            SA: 
+            A. Blockers: Still awaiting AI developer 
+            B. What did you do this week: n/a 
+            C. What are the goals for the week: n/a 
+            
+            PM/IL: 
+            A. Blockers: Complete SRA awaiting AI developer to finalize the deliverable for review 
+            B. What did you do this week: Re-working with the PP after the AI 
+            C. What are the goals for the week: Update PP with AI timelines once SA questions and resource is confirmed. Need to determine impact of AI development to timeline around integrations. Workstream leads to update status report by 5/8, 12pm. """
+        },
+        {
+            "role": "assistant",
+            "content": """{
+                "updates": [
+                    {
+                    "workstream": "BPM",
+                    "accomplishments": [
+                        "Appian UI has been developed",
+                        "Awaiting AI team member",
+                        "SNOW On-Boarding Workflow Requirements Defined (85%)",
+                        "Investigated SBX data and continued to refine BRD with requirements."
+                    ],
+                    "next_steps": [
+                        "Work with the AI team member and showcase the Appian UI/Workflow to date and prepare for Integration",
+                        "Walkthrough AI requirements with BPO"
+                    ],
+                    "expected_end_date": ""
+                    },
+                    {
+                    "workstream": "DE",
+                    "accomplishments": [
+                        "VAL data ingestion started this week 5/7",
+                        "UAT completed on 5/12"
+                    ],
+                    "next_steps": [
+                        "IoQ Draft to be ready on 5/17",
+                        "Finish managing tasks on datalake and perform UAT on all tables"
+                    ],
+                    "expected_end_date": ""
+                    },
+                    {
+                    "workstream": "AI",
+                    "accomplishments": [
+                        "Developer not assigned yet",
+                        "IT leadership met with AI leadership to provide POC for developer"
+                    ],
+                    "next_steps": [
+                        "SG1 completed, TRA is WIP, SG2 and SG3 requires input from AI Developer for finalizing technical stack",
+                        "Understand AI dev timeline"
+                    ],
+                    "expected_end_date": ""
+                    }
+                ],
+                "issues_risks": [
+                    "Need AI developer for search component, SDER SG2 review, and System Risk Assessment (SRA)",
+                    "BPM workstream on hold until AI development is at least 50% done to begin integration testing"
+                ],
+                "key_decisions": [
+                    "Estimated Go live date moved to 6/26",
+                    "AI dev timeline estimated 6-7 weeks",
+                    "SRA to be signed by BPO"
+                ],
+                "description": "This update summarizes the current status of various workstreams including BPM, DE, AI, SA, and PM/IL as of May 20, 2025. Key achievements include completion of QDR documents and ongoing efforts to onboard an AI developer. Several workstreams are facing delays due to the lack of an assigned AI developer, impacting timelines and deliverables.",
+                "title": "Weekly Status Update - 05/20"
+                }"""
         },
         {"role": "user", "content": f"Here are my notes as of today {datetime.now(tz=pytz.timezone('America/New_York')).strftime('%Y-%m-%d')}: {user_input}"}
     ]
 
     response_format = {
-        "type" : "json_schema",
-        "json_schema" : {
-    "name": "weekly_status_update",
-    "schema": {
-        "type": "object",
-        "properties": {
-        "title": {
-            "type": "string",
-            "description": "The title of the status update."
-        },
-        "description": {
-            "type": "string",
-            "description": "A summary description of the status update across all workstreams."
-        },
-        "updates": {
-            "type": "array",
-            "description": "List of workstreams and their statuses.",
-            "items": {
+    "format": {
+        "type": "json_schema",
+        "name": "status_summarization",
+        "schema": {
             "type": "object",
             "properties": {
-                "Workstream": {
-                "type": "string",
-                "description": "Name of the workstream."
-                },
-                "Status": {
-                "type": "string",
-                "description": "Current status of the workstream."
-                },
-                "Achievements": {
+            "updates": {
                 "type": "array",
-                "description": "Achievements made in the workstream.",
-                "items": {"type": "string"}
+                "description": "A list of workstreams with their respective status information.",
+                "items": {
+                "type": "object",
+                "properties": {
+                    "Workstream": {
+                    "type": "string",
+                    "description": "The name of the workstream."
+                    },
+                    "Status": {
+                    "type": "string",
+                    "description": "The current status of the workstream.",
+                    "enum": [
+                        "Done",
+                        "On Time",
+                        "At Risk",
+                        "Late",
+                        "Cancelled"
+                    ]
+                    },
+                    "Achievements": {
+                    "type": "string",
+                    "description": "A short summary of the weekly achievements with completion dates in MM/DD format if available."
+                    },
+                    "Next Steps": {
+                    "type": "string",
+                    "description": "A short summary of the next steps with expected completion dates in MM/DD format if available."
+                    },
+                    "Expected End Date": {
+                    "type": "string",
+                    "description": "The expected completion date in MM/DD format for this specific workstream."
+                    }
                 },
-                "Next Steps": {
-                "type": "array",
-                "description": "Next steps planned for the workstream.",
-                "items": {"type": "string"}
-                },
-                "Planned End Date": {
-                "type": "string",
-                "description": "When the workstream is planned to end."
+                "required": [
+                    "Workstream",
+                    "Status",
+                    "Achievements",
+                    "Next Steps",
+                    "Expected End Date"
+                ],
+                "additionalProperties": False
                 }
             },
+            "title": {
+                "type": "string",
+                "description": "The title summarizing key information across workstreams with the date."
+            },
+            "description": {
+                "type": "string",
+                "description": "A summary description of the status updates across all workstreams."
+            },
+            "key_decisions": {
+                "type": "string",
+                "description": "Key decisions made during the status update period."
+            },
+            "issues_risks": {
+                "type": "string",
+                "description": "Issues and risks identified in the update."
+            },
+            "enough_information": {
+                "type": "string",
+                "description": "Indicates whether there is enough information to summarize the status update.",
+                "enum": [
+                    "True",
+                    "False"
+                ]
+            }
+            },
             "required": [
-                "Workstream",
-                "Status",
-                "Achievements",
-                "Next Steps",
-                "Planned End Date"
+            "updates",
+            "title",
+            "description",
+            "key_decisions",
+            "issues_risks",
+            "enough_information"
             ],
             "additionalProperties": False
-            }
         },
-        "key_decisions": {
-            "type": "array",
-            "description": "Key decisions made during the status update period.",
-            "items": {
-            "type": "string"
-            }
-        },
-        "issues_risks": {
-            "type": "array",
-            "description": "Issues and risks identified in the update.",
-            "items": {
-            "type": "string"
-            }
+        "strict": True
         }
-        },
-        "required": [
-        "title",
-        "description",
-        "updates",
-        "key_decisions",
-        "issues_risks"
-        ],
-        "additionalProperties": False
-    },
-    "strict": True
-    }
     }
 
 
 
-    response = client.chat.completions.create(
+
+
+    response = client.responses.create(
         stream=False,
-        messages=messages,
-        response_format=response_format,
-        max_tokens=4096,
+        input=messages,
+        text=response_format,
         temperature=0,
         top_p=1.0,
         model=deployment,
     )
-
-    response_dict = ast.literal_eval(response.choices[0].message.content)
+    print(response.output_text)  # Debugging line
+    response_dict = ast.literal_eval(response.output_text)
 
     print(response_dict)  # Debugging line
     print(type(response_dict))  # Debugging line
@@ -279,6 +386,9 @@ def index():
     if request.method == 'POST':
         notes = request.form['notes']
         result = get_response(notes)
+        print(result)  # Debugging line
+        if result['enough_information'] == "False":
+            return jsonify({"columns": ["Error"], "data":[{"Error":"Insufficient Notes for summary generation, please provide more notes and try again."}]}),400
         df = createDf(result['updates'])
         
         # Include column names in the response
@@ -293,6 +403,9 @@ def index():
         # Store the stream in a global variable or use a session to access it later
         global ppt_file_stream
         ppt_file_stream = ppt_stream
+
+        print('-----------------------------------------------------')
+        print(response_data)
 
         # Return the DataFrame as JSON
         return jsonify(response_data)
